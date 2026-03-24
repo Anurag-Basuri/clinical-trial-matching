@@ -11,8 +11,6 @@ import pandas as pd
 
 # Project imports
 from src.utils.json_loader import load_all_data
-from src.privacy.anonymizer import anonymize
-from src.preprocessing import preprocess
 
 
 # =============================
@@ -303,6 +301,9 @@ def main():
             # ML prediction
             if show_model_prediction and vectorizer is not None and classifier is not None:
                 with st.spinner("Running ML prediction..."):
+                    from src.privacy.anonymizer import anonymize
+                    from src.preprocessing import preprocess
+
                     anon_text = anonymize(patient["raw_text"])
                     combined_text = anon_text + " " + trial["eligibility_text"]
                     processed_text = preprocess(combined_text)
