@@ -178,6 +178,7 @@ def main():
     # Load data and models
     vectorizer, classifier, model_error = load_models()
     patients, trials, pairs = load_data()
+    ui_only_mode = model_error is not None
     
     patient_map = {p["patient_id"]: p for p in patients}
     trial_map = {t["trial_id"]: t for t in trials}
@@ -203,7 +204,16 @@ def main():
         st.markdown("---")
         st.markdown("### ⚙️ Settings")
         show_raw_text = st.checkbox("Show raw text", value=True)
-        show_model_prediction = st.checkbox("Use ML prediction", value=True)
+        if ui_only_mode:
+            st.checkbox(
+                "Use ML prediction",
+                value=False,
+                disabled=True,
+                help="ML models not available for UI-only deploy."
+            )
+            show_model_prediction = False
+        else:
+            show_model_prediction = st.checkbox("Use ML prediction", value=True)
         
         st.markdown("---")
         st.markdown("### ℹ️ About")
@@ -220,9 +230,8 @@ def main():
     
     # Check for model errors
     if model_error:
-        st.error(f"⚠️ Model not found: {model_error}")
-        st.info("Please run `python run_pipeline.py` to train the models first.")
-        return
+        st.warning(f"⚠️ Model not found: {model_error}")
+        st.info("UI-only mode enabled. Train models later with `python run_pipeline.py`.")
     
     # Tabs for different modes
     tab1, tab2, tab3 = st.tabs(["🔍 Single Match", "📋 Batch Analysis", "📈 Statistics"])
@@ -292,7 +301,7 @@ def main():
             checks, rule_eligible = get_eligibility_details(patient, trial)
             
             # ML prediction
-            if show_model_prediction:
+            if show_model_prediction and vectorizer is not None and classifier is not None:
                 with st.spinner("Running ML prediction..."):
                     anon_text = anonymize(patient["raw_text"])
                     combined_text = anon_text + " " + trial["eligibility_text"]
